@@ -50,5 +50,5 @@ class Client:
             self.s.send(message.encode())
 
 if __name__ == "__main__":
-    cl = Client("127.0.0.1", 9001, "b_g")
+    cl = Client("127.0.0.1", 9001, "mutel")
     cl.init_connection()
