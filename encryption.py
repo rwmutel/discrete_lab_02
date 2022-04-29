@@ -2,34 +2,40 @@
 Module for RSA encryption by Roman Mutel
 '''
 
+from sympy import randprime
+
+# hardcoded alphabet for coding
+ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
+        'АБВГҐДЕЄЖЗИІЇКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя01234567890!@#$%^&*()_+-=? '
+
 def get_letter(order: int) -> str:
     # alphabet length is 144
-    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-        'АБВГҐДЕЄЖЗИІЇКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя01234567890!@#$%^&*()_+-=? '
-    return alphabet[order]
+    return ALPHABET[order]
 
 def get_order(letter: str) -> int:
-    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-        'АБВГҐДЕЄЖЗИІЇКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя01234567890!@#$%^&*()_+-=? '
-    return alphabet.find(letter)
+    return ALPHABET.find(letter)
 
 def gcd(a, b):
     if a % b == 0:
         return b
     return gcd(b, a % b)
 
-def generate_key(p, q):
-    n = p * q
+def generate_key(bit_len, p=0, q=0):
+    # if p and q aren't set by the user, generate them
+    if (p,q) == (0,0):
+        p = randprime(2 ** (bit_len - 1), 2 ** bit_len - 1)
+        q = randprime(2 ** (bit_len - 1), 2 ** bit_len - 1)
+
     e = 10 # hard coded value
     l = (p - 1) * (q - 1)
     while gcd(l, e) != 1 or e % 2 == 0:
         e += 1
-    return p*q, e
+    return p, q, e
 
 def generate_secret_key(e, p, q):
-    return _modular_inverse(e, (p - 1)*(q - 1))
+    return modular_inverse(e, (p - 1)*(q - 1))
 
-def _modular_inverse(a, m):
+def modular_inverse(a, m):
     '''
     Finds modular multiplicative inverse of a under modulo m
     '''
@@ -55,13 +61,13 @@ def _modular_inverse(a, m):
 
     return x
 
-def get_block_length(p, q):
-    n = 1
+def get_block_length(n):
+    block_len = 1
     number = 144 # alphabet length
-    while number < p * q:
-        number += 144 * 1000 ** n
-        n += 1
-    return 2 * (n - 1)
+    while number < n:
+        number += 144 * 1000 ** block_len
+        block_len += 1
+    return 3 * (block_len - 1)
 
 def split(msg, n) -> list:
     splitted_len = (len(msg) // n + 1) * n if len(msg) % n != 0 else len(msg)
@@ -85,29 +91,29 @@ def fast_modular_pow(number, power, module):
     return output
 
 
-def encode(msg, p, q) -> list:
-    n, e = generate_key(p, q)
-    block_len = get_block_length(p, q)
+def encrypt(msg, e, n) -> list:
+    block_len = get_block_length(n)
     splitted = split(msg, block_len)
     encoded = [fast_modular_pow(int(element), e, n) for element in splitted]
     return encoded
 
-def decode(msg, e, p, q) -> str:
+def decrypt(msg, e, p, q) -> str:
     d = generate_secret_key(e, p, q)
-    block_len = get_block_length(p, q)
+    block_len = get_block_length(n)
     decoded = ''
     for el in msg:
-        decoded += str(fast_modular_pow(el, d, p * q)).zfill(block_len)
+        decoded += str(fast_modular_pow(el, d, n)).zfill(block_len)
     decoded_str = ''.join([get_letter(int(decoded[i * 3 : (i + 1) * 3])) for i in range(len(decoded) // 3)])
     while decoded_str[0] == '0':
         decoded_str = decoded_str[1:]
     return decoded_str
 
 if __name__ == '__main__':
-    p, q = 911, 919
+    # p, q = 911, 919
     # p, q = 53, 67
-    e = generate_key(p, q)[1]
+    p, q, e = generate_key(1024)
+    n = p * q
     # print(generate_secret_key(e, p, q))
     # print(get_block_length(p,q))
-    # print(encode('abcde', p, q))
-    print(decode(encode('roman мутель 05-12', p, q), e, p, q))
+    # print(encrypt('abcde', p, q))
+    print(decrypt(encrypt('roman мутель 05-12 !@#$%^&*(', e, n), e, p, q))
