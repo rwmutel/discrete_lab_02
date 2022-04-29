@@ -69,11 +69,27 @@ def split(msg, n) -> list:
     splitted = ''.join([str(get_order(letter)).zfill(3) for letter in msg])
     return [splitted[i * n : (i + 1) * n] for i in range(3 * splitted_len // n)]
 
+def fast_modular_pow(number, power, module):
+    bit_power_len = len(bin(power)) - 2
+    terms_mod = []
+    terms_mod.append(number % module)
+    for i in range(bit_power_len + 1):
+        terms_mod.append(terms_mod[-1] ** 2 % module)
+
+    output = 1
+    for i in range(bit_power_len):
+        if (1 << i) & power:
+            output *= terms_mod[i]
+            output = output % module
+
+    return output
+
+
 def encode(msg, p, q) -> list:
     n, e = generate_key(p, q)
     block_len = get_block_length(p, q)
     splitted = split(msg, block_len)
-    encoded = [int(element) ** e % n for element in splitted]
+    encoded = [fast_modular_pow(int(element), e, n) for element in splitted]
     return encoded
 
 def decode(msg, e, p, q) -> str:
@@ -81,7 +97,7 @@ def decode(msg, e, p, q) -> str:
     block_len = get_block_length(p, q)
     decoded = ''
     for el in msg:
-        decoded += str(el ** d % (p * q)).zfill(block_len)
+        decoded += str(fast_modular_pow(el, d, p * q)).zfill(block_len)
     decoded_str = ''.join([get_letter(int(decoded[i * 3 : (i + 1) * 3])) for i in range(len(decoded) // 3)])
     while decoded_str[0] == '0':
         decoded_str = decoded_str[1:]
@@ -94,4 +110,4 @@ if __name__ == '__main__':
     # print(generate_secret_key(e, p, q))
     # print(get_block_length(p,q))
     # print(encode('abcde', p, q))
-    print(decode(encode('roman mutel 05-12', p, q), e, p, q))
+    print(decode(encode('roman мутель 05-12', p, q), e, p, q))
