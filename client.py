@@ -1,5 +1,6 @@
 import socket
 import threading
+import encryption
 
 class Client:
     def __init__(self, server_ip: str, port: int, username: str) -> None:

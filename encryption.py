@@ -95,12 +95,12 @@ def encrypt(msg, e, n) -> list:
     block_len = get_block_length(n)
     splitted = split(msg, block_len)
     encoded = [fast_modular_pow(int(element), e, n) for element in splitted]
-    return encoded
+    return ','.join(map(str, encoded))
 
-def decrypt(msg, e, p, q) -> str:
-    d = generate_secret_key(e, p, q)
+def decrypt(msg, d) -> str:
     block_len = get_block_length(n)
     decoded = ''
+    msg = map(int, msg.split(','))
     for el in msg:
         decoded += str(fast_modular_pow(el, d, n)).zfill(block_len)
     decoded_str = ''.join([get_letter(int(decoded[i * 3 : (i + 1) * 3])) for i in range(len(decoded) // 3)])
@@ -111,9 +111,9 @@ def decrypt(msg, e, p, q) -> str:
 if __name__ == '__main__':
     # p, q = 911, 919
     # p, q = 53, 67
-    p, q, e = generate_key(1024)
+    p, q, e = generate_key(10)
     n = p * q
-    # print(generate_secret_key(e, p, q))
-    # print(get_block_length(p,q))
-    # print(encrypt('abcde', p, q))
-    print(decrypt(encrypt('roman мутель 05-12 !@#$%^&*(', e, n), e, p, q))
+    d = generate_secret_key(e,p,q)
+    print(d)
+    print(decrypt(encrypt(str(d), e, n), d))
+    print(decrypt(encrypt('roman мутель 05-12 !@#$%^&*(', e, n), d))
