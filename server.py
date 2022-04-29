@@ -16,45 +16,41 @@ class Server:
         self.s.listen(100)
 
         # generate keys ...
+        self.p, self.q, self.e = encryption.generate_key(20)
+        self.d = encryption.generate_secret_key(self.e, self.p, self.q)
+
 
         while True:
             c, addr = self.s.accept()
-            username = c.recv(1024).decode()
+            n, e, username = c.recv(1024).decode().split(',')
             print(f"{username} tries to connect")
             self.broadcast(f'new person has joined: {username}')
-            self.username_lookup[c] = username
+            self.username_lookup[c] = (int(n), int(e), username)
+            c.send(f'{self.p * self.q},{self.e}'.encode())
             self.clients.append(c)
-
-            # send public key to the client 
-
-            # ...
-
-            # encrypt the secret with the clients public key
-
-            # ...
-
-            # send the encrypted secret to a client 
-
-            # ...
 
             threading.Thread(target=self.handle_client,args=(c,addr,)).start()
 
     def broadcast(self, msg: str):
         for client in self.clients: 
 
-            # encrypt the message
-
-            # ...
-
-            client.send(msg.encode())
+            encrypted = encryption.encrypt(msg, self.username_lookup[client][1], self.username_lookup[client][0])
+            print(f'message:{msg}')
+            print(f'encr msg: {encrypted}')
+            client.send(encrypted.encode())
 
     def handle_client(self, c: socket, addr): 
         while True:
-            msg = c.recv(1024)
+            msg = c.recv(1024).decode()
+            decrypted = encryption.decrypt(msg, self.d, self.p * self.q)
 
             for client in self.clients:
                 if client != c:
-                    client.send(msg)
+                    encrypted = encryption.encrypt(decrypted, self.username_lookup[client][1], self.username_lookup[client][0])
+                    print(f'message:{msg}')
+                    print(f'decrypted: {decrypted}')
+                    print(f'encr msg: {encrypted}')
+                    client.send(encrypted.encode())
 
 if __name__ == "__main__":
     s = Server(9001)

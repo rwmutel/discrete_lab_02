@@ -5,11 +5,11 @@ Module for RSA encryption by Roman Mutel
 from sympy import randprime
 
 # hardcoded alphabet for coding
-ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-        'АБВГҐДЕЄЖЗИІЇКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя01234567890!@#$%^&*()_+-=? '
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" + \
+        "АБВГҐДЕЄЖЗИІЇКЛМНОПРСТУФХЦЧШЩЬЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя01234567890!@#$%^&*()_+-=?',.: "
+ALPHABET_LEN = len(ALPHABET)
 
 def get_letter(order: int) -> str:
-    # alphabet length is 144
     return ALPHABET[order]
 
 def get_order(letter: str) -> int:
@@ -63,9 +63,9 @@ def modular_inverse(a, m):
 
 def get_block_length(n):
     block_len = 1
-    number = 144 # alphabet length
+    number = ALPHABET_LEN
     while number < n:
-        number += 144 * 1000 ** block_len
+        number += ALPHABET_LEN * 1000 ** block_len
         block_len += 1
     return 3 * (block_len - 1)
 
@@ -97,7 +97,7 @@ def encrypt(msg, e, n) -> list:
     encoded = [fast_modular_pow(int(element), e, n) for element in splitted]
     return ','.join(map(str, encoded))
 
-def decrypt(msg, d) -> str:
+def decrypt(msg, d, n) -> str:
     block_len = get_block_length(n)
     decoded = ''
     msg = map(int, msg.split(','))
@@ -114,6 +114,6 @@ if __name__ == '__main__':
     p, q, e = generate_key(10)
     n = p * q
     d = generate_secret_key(e,p,q)
-    print(d)
-    print(decrypt(encrypt(str(d), e, n), d))
-    print(decrypt(encrypt('roman мутель 05-12 !@#$%^&*(', e, n), d))
+    # print(d)
+    # print(decrypt(encrypt(str(d), e, n), d))
+    print(decrypt(encrypt('roman мутель 05-12 !@#$%^&*(', e, n), d, n))
