@@ -1,6 +1,7 @@
 import socket
 import threading
 import encryption
+from hashlib import sha224
 
 class Server:
 
@@ -35,21 +36,23 @@ class Server:
         for client in self.clients: 
 
             encrypted = encryption.encrypt(msg, self.username_lookup[client][1], self.username_lookup[client][0])
-            print(f'message:{msg}')
-            print(f'encr msg: {encrypted}')
+            print(f'broadcast message:{msg}')
+            print(f'encrypted message for {self.username_lookup[client][2]}: {encrypted}')
             client.send(encrypted.encode())
 
     def handle_client(self, c: socket, addr): 
         while True:
-            msg = c.recv(1024).decode()
+            msg, msg_hash = c.recv(1024).decode().split(':')
             decrypted = encryption.decrypt(msg, self.d, self.p * self.q)
 
             for client in self.clients:
                 if client != c:
                     encrypted = encryption.encrypt(decrypted, self.username_lookup[client][1], self.username_lookup[client][0])
-                    print(f'message:{msg}')
+                    print(f'received message:{msg}')
                     print(f'decrypted: {decrypted}')
-                    print(f'encr msg: {encrypted}')
+                    print(f'received hash: {msg_hash}')
+                    print(f'hashes are the same: {msg_hash == sha224(decrypted.encode()).hexdigest()}')
+                    print(f'encrypted message for {self.username_lookup[client][2]}: {encrypted}')
                     client.send(encrypted.encode())
 
 if __name__ == "__main__":

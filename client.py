@@ -1,6 +1,7 @@
 import socket
 import threading
 import encryption
+from hashlib import sha224
 
 class Client:
     def __init__(self, server_ip: str, port: int) -> None:
@@ -52,7 +53,10 @@ class Client:
             # encrypt message with the secrete key
             encrypted = encryption.encrypt(message, self.server_e, self.server_n)
 
-            self.s.send(encrypted.encode())
+            # calculate the hash to check later
+            msg_hash = sha224(message.encode()).hexdigest()
+
+            self.s.send(f'{encrypted}:{msg_hash}'.encode())
 
 if __name__ == "__main__":
     cl = Client("127.0.0.1", 9001)
