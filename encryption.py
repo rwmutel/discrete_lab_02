@@ -20,7 +20,7 @@ def gcd(a, b):
         return b
     return gcd(b, a % b)
 
-def generate_key(bit_len, p=0, q=0):
+def generate_key(bit_len:int, p=0, q=0) -> tuple([int, int, int]):
     # if p and q aren't set by the user, generate them
     if (p,q) == (0,0):
         p = randprime(2 ** (bit_len - 1), 2 ** bit_len - 1)
@@ -32,7 +32,7 @@ def generate_key(bit_len, p=0, q=0):
         e += 1
     return p, q, e
 
-def generate_secret_key(e, p, q):
+def generate_secret_key(e:int, p:int, q:int) -> int:
     return modular_inverse(e, (p - 1)*(q - 1))
 
 def modular_inverse(a, m):
@@ -91,13 +91,13 @@ def fast_modular_pow(number, power, module):
     return output
 
 
-def encrypt(msg, e, n) -> list:
+def encrypt(msg: str, e: int, n: int) -> str:
     block_len = get_block_length(n)
     splitted = split(msg, block_len)
     encoded = [fast_modular_pow(int(element), e, n) for element in splitted]
     return ','.join(map(str, encoded))
 
-def decrypt(msg, d, n) -> str:
+def decrypt(msg: str, d: int, n: int) -> str:
     block_len = get_block_length(n)
     decoded = ''
     msg = map(int, msg.split(','))
